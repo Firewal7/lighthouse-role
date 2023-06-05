@@ -1,41 +1,33 @@
 ---
 # tasks file for lighthouse-role
-  tasks:
-    - name: Install nginx
-      become: true
-      ansible.builtin.apt:
-        name: nginx
-        state: present
-        update_cache: true
-      notify: restart nginx service
-  pre_tasks:
-    - name: Install unzip
-      become: true
-      ansible.builtin.apt:
-        name: unzip
-        state: present
-        update_cache: true
-  tasks:
-    - name: Get lighthouse distrib
-      ansible.builtin.get_url:
-        url: "https://github.com/VKCOM/lighthouse/archive/refs/heads/master.zip"
-        dest: "./lighthouse.zip"
-        mode: "0644"
-    - name: Unarchive lighthouse distrib into nginx
-      become: true
-      ansible.builtin.unarchive:
-        src: ./lighthouse.zip
-        dest: /var/www/html/
-        remote_src: true
-      notify: restart nginx service
-    - name: Make nginx config
-      become: true
-      ansible.builtin.template:
-        src: /home/kali/lesson/devops-netology/08-ansible-03-yandex/templates/default.j2
-        dest: /etc/nginx/sites-enabled/default
-        mode: "0644"
-      notify: restart nginx service
-    - name: Remove lighthouse distrib
-      ansible.builtin.file:
-        path: "./lighthouse.zip"
-        state: absent
+- name: Install epel-release
+  become: true
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+- name: Install nginx
+  become: true
+  ansible.builtin.yum:
+    name: nginx
+    state: present
+  notify: Nginx start
+- name: Create nginx config
+  become: true
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: 0644
+  notify: Nginx reload
+- name: Lighthouse | Clone repository
+  become: true
+  ansible.builtin.git:
+    repo: "{{ lighthouse_url }}"
+    dest: "{{ lighthouse_dir }}"
+    version: master
+- name: Create Lighthouse config
+  become: true
+  ansible.builtin.template:
+    src: lighthouse_nginx.conf.j2
+    dest: /etc/nginx/conf.d/lighthouse.conf
+    mode: 0644
+  notify: Nginx reload
