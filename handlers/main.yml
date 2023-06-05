@@ -1,0 +1,18 @@
+---
+# handlers file for lighthouse-role
+- name: Install nginx
+  hosts: lighthouse
+  handlers:
+    - name: Restart Nginx Service
+      become: true
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+- name: Install lighthouse
+  hosts: lighthouse
+  handlers:
+    - name: restart nginx service
+      become: true
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
